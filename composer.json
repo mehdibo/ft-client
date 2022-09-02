@@ -25,7 +25,8 @@
     ],
     "require": {
         "php": "^8.0|^8.1",
-        "mehdibo/oauth2-fortytwo": "^1.0"
+        "mehdibo/oauth2-fortytwo": "^1.0",
+        "symfony/http-client": "^6.1"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5",
