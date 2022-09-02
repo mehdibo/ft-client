@@ -1,0 +1,44 @@
+{
+    "name": "mehdibo/ft-sdk",
+    "description": "Client library for Forty Two Intranet API",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Mehdi Bounya",
+            "email": "mehdi.bounya@gmail.com"
+        }
+    ],
+    "keywords": [
+        "php",
+        "fortytwo",
+        "ft",
+        "42",
+        "42 school",
+        "1337",
+        "api",
+        "oauth",
+        "oauth2",
+        "client",
+        "authorization",
+        "authentication"
+    ],
+    "require": {
+        "php": "^7.4|^8.0",
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5",
+        "phpstan/phpstan": "^0.12.76",
+        "squizlabs/php_codesniffer": "^3.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Mehdibo\\FortyTwo\\SDK\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Mehdibo\\FortyTwo\\SDK\\Test\\": "tests/"
+        }
+    }
+}
