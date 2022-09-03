@@ -1,9 +1,9 @@
 <?php
 
-namespace Mehdibo\FortyTwo\SDK\Test;
+namespace Mehdibo\FortyTwo\Client\Test;
 
 use League\OAuth2\Client\Token\AccessTokenInterface;
-use Mehdibo\FortyTwo\SDK\Client;
+use Mehdibo\FortyTwo\Client\Client;
 use Mehdibo\OAuth2\Client\Provider\FortyTwo;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;

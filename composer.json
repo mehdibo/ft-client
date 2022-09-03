@@ -35,12 +35,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Mehdibo\\FortyTwo\\SDK\\": "src/"
+            "Mehdibo\\FortyTwo\\Client\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Mehdibo\\FortyTwo\\SDK\\Test\\": "tests/"
+            "Mehdibo\\FortyTwo\\Client\\Test\\": "tests/"
         }
     }
 }
