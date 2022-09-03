@@ -12,6 +12,9 @@ use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
+/**
+ * BasicClient allows you to send raw authenticated requests to the 42 API
+ */
 class BasicClient
 {
     public const VERSION = "v1.0.0";
