@@ -230,6 +230,69 @@ class ClientTest extends TestCase
     }
 
     /**
+     * @dataProvider successfulPatchDataProvider
+     */
+    public function testSuccessfulPatch(
+        string $expectedUrl,
+        string $uri,
+        array $payload,
+        bool $hasExpiredToken,
+    ): void
+    {
+        $response = $this->createMock(ResponseInterface::class);
+        $response->method("getStatusCode")->willReturn(200);
+
+        $expectedOptions = [
+            'headers' => [
+                'Authorization' => 'Bearer access_token',
+                'User-Agent' => 'Mehdibo-FT-Client/'.Client::VERSION,
+            ],
+            "json" => $payload,
+        ];
+        $client = $this->createClient(
+            1,
+            "PATCH",
+            $expectedUrl,
+            $expectedOptions,
+            $response,
+            $hasExpiredToken,
+        );
+
+        $client->patch($uri, $payload);
+    }
+
+    /**
+     * @dataProvider failedRequestDataProvider
+     */
+    public function testFailedPatch(
+        string $expectedUrl,
+        string $uri,
+        ResponseInterface $response,
+        string $expectedException,
+        string $expectedExceptionMessage,
+    ): void
+    {
+        $expectedOptions = [
+            'headers' => [
+                'Authorization' => 'Bearer access_token',
+                'User-Agent' => 'Mehdibo-FT-Client/'.Client::VERSION,
+            ],
+            "json" => [],
+        ];
+        $client = $this->createClient(
+            1,
+            "PATCH",
+            $expectedUrl,
+            $expectedOptions,
+            $response,
+        );
+
+        $this->expectException($expectedException);
+        $this->expectExceptionMessage($expectedExceptionMessage);
+        $client->patch($uri, []);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function successfulGetDataProvider(): array
@@ -346,5 +409,10 @@ class ClientTest extends TestCase
                 true,
             ],
         ];
+    }
+
+    public function successfulPatchDataProvider(): array
+    {
+        return $this->successfulPostDataProvider();
     }
 }

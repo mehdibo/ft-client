@@ -180,4 +180,18 @@ class Client
     {
         return $this->doRequest("POST", $uri, ["json" => $payload]);
     }
+
+    /**
+     * @param string $uri
+     * @param array $payload
+     * @return ResponseInterface
+     * @throws RateLimitReached
+     * @throws IdentityProviderException
+     * @throws TransportExceptionInterface
+     * @throws ServerError
+     */
+    public function patch(string $uri, array $payload): ResponseInterface
+    {
+        return $this->doRequest("PATCH", $uri, ["json" => $payload]);
+    }
 }
