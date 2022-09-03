@@ -24,8 +24,7 @@ class Client
     public function __construct(
         private FortyTwo $provider,
         HttpClientInterface|null $httpClient = null,
-    )
-    {
+    ) {
         $this->httpClient = $httpClient ?? HttpClient::create();
     }
 
@@ -117,6 +116,7 @@ class Client
         $uri = self::BASE_URL . ltrim($uri, "/");
         $options["headers"]["Authorization"] = "Bearer " . $this->getToken();
         $options["headers"]["User-Agent"] = "Mehdibo-FT-Client/".self::VERSION;
+        // TODO: handle rate limit
         return $this->httpClient->request($method, $uri, $options);
     }
 
@@ -143,6 +143,4 @@ class Client
         $uri = $this->buildUri($uri, $query);
         return $this->doRequest("GET", $uri);
     }
-
-
 }

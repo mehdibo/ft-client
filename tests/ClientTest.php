@@ -33,8 +33,7 @@ class ClientTest extends TestCase
         array $expectedOptions = [],
         ResponseInterface|null $response = null,
         bool $hasExpiredToken = false,
-    ): Client
-    {
+    ): Client {
         if ($response === null) {
             $response = $this->createMock(ResponseInterface::class);
         }
