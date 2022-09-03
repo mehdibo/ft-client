@@ -6,7 +6,6 @@ use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessTokenInterface;
 use Mehdibo\FortyTwo\Client\Exception\RateLimitReached;
 use Mehdibo\FortyTwo\Client\Exception\ServerError;
-use Mehdibo\FortyTwo\SDK\Exception\MissingRefreshToken;
 use Mehdibo\OAuth2\Client\Provider\FortyTwo;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
