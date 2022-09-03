@@ -64,7 +64,7 @@ class ClientTest extends TestCase
         $this->assertInstanceOf(FortyTwo::class, $client->getProvider());
     }
 
-    public function testSetProvider(): void
+    public function testWithProvider(): void
     {
         $provider = new FortyTwo();
         $client = $this->createClient();
