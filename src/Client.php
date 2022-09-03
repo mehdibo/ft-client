@@ -72,7 +72,6 @@ class Client
     }
 
     /**
-     * @throws MissingRefreshToken
      * @throws IdentityProviderException
      */
     private function refreshToken(): void
@@ -83,7 +82,9 @@ class Client
         }
         $refreshToken = $this->accessToken?->getRefreshToken();
         if ($refreshToken === null) {
-            throw new MissingRefreshToken();
+            // A refresh token is not provided with the Client Credentials grant
+            $this->fetchTokenFromClientCredentials();
+            return;
         }
         $this->accessToken = $this->provider->getAccessToken("refresh_token", [
             "refresh_token" => $refreshToken,
@@ -94,7 +95,6 @@ class Client
      * Get token, fetch one if not already done and refresh it if expired
      * @return string
      * @throws IdentityProviderException
-     * @throws MissingRefreshToken
      */
     private function getToken(): string
     {
@@ -115,7 +115,7 @@ class Client
      * @param string $uri
      * @param array<string, mixed> $options
      * @return ResponseInterface
-     * @throws TransportExceptionInterface|IdentityProviderException|MissingRefreshToken
+     * @throws TransportExceptionInterface|IdentityProviderException
      * @throws RateLimitReached
      * @throws ServerError
      */
@@ -154,7 +154,7 @@ class Client
      * @param array<string, string> $query The query parameters to send with the request
      * @return ResponseInterface
      * @throws RateLimitReached
-     * @throws IdentityProviderException|MissingRefreshToken
+     * @throws IdentityProviderException
      * @throws TransportExceptionInterface
      * @throws ServerError
      */
