@@ -112,6 +112,7 @@ class ClientTest extends TestCase
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
+                'User-Agent' => 'Mehdibo-FT-Client/'.Client::VERSION,
             ],
         ];
         $client = $this->createClient(

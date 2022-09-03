@@ -13,6 +13,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class Client
 {
+    public const VERSION = "v1.0.0";
+
     private const BASE_URL = "https://api.intra.42.fr/v2/";
 
     private ?AccessTokenInterface $accessToken = null;
@@ -114,6 +116,7 @@ class Client
     {
         $uri = self::BASE_URL . ltrim($uri, "/");
         $options["headers"]["Authorization"] = "Bearer " . $this->getToken();
+        $options["headers"]["User-Agent"] = "Mehdibo-FT-Client/".self::VERSION;
         return $this->httpClient->request($method, $uri, $options);
     }
 
