@@ -1,9 +1,11 @@
 <?php
 
-namespace Mehdibo\FortyTwo\SDK;
+namespace Mehdibo\FortyTwo\Client;
 
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessTokenInterface;
+use Mehdibo\FortyTwo\Client\Exception\RateLimitReached;
+use Mehdibo\FortyTwo\Client\Exception\ServerError;
 use Mehdibo\FortyTwo\SDK\Exception\MissingRefreshToken;
 use Mehdibo\OAuth2\Client\Provider\FortyTwo;
 use Symfony\Component\HttpClient\HttpClient;
@@ -17,10 +19,14 @@ class Client
 
     private const BASE_URL = "https://api.intra.42.fr/v2/";
 
-    private ?AccessTokenInterface $accessToken = null;
+    private AccessTokenInterface|null $accessToken = null;
 
     private HttpClientInterface $httpClient;
 
+    /**
+     * @param FortyTwo $provider The OAuth2 provider for access tokens
+     * @param HttpClientInterface|null $httpClient
+     */
     public function __construct(
         private FortyTwo $provider,
         HttpClientInterface|null $httpClient = null,
@@ -110,14 +116,25 @@ class Client
      * @param array<string, mixed> $options
      * @return ResponseInterface
      * @throws TransportExceptionInterface|IdentityProviderException|MissingRefreshToken
+     * @throws RateLimitReached
+     * @throws ServerError
      */
     private function doRequest(string $method, string $uri, array $options = []): ResponseInterface
     {
         $uri = self::BASE_URL . ltrim($uri, "/");
         $options["headers"]["Authorization"] = "Bearer " . $this->getToken();
         $options["headers"]["User-Agent"] = "Mehdibo-FT-Client/".self::VERSION;
-        // TODO: handle rate limit
-        return $this->httpClient->request($method, $uri, $options);
+        $resp = $this->httpClient->request($method, $uri, $options);
+        switch ($resp->getStatusCode()) {
+            // Rate limit reached
+            case 429:
+                $retryAfter = $resp->getHeaders(false)["retry-after"][0] ?? null;
+                throw new RateLimitReached($retryAfter === null ? null : (int)$retryAfter);
+            case 500:
+                throw new ServerError();
+            default:
+                return $resp;
+        }
     }
 
     /**
@@ -133,12 +150,15 @@ class Client
     }
 
     /**
-     * @param string $uri The URI to request, e.g. /v2/projects_users
+     * @param string $uri The URI to request, e.g. /projects_users
      * @param array<string, string> $query The query parameters to send with the request
-     * @throws TransportExceptionInterface|IdentityProviderException|MissingRefreshToken
      * @return ResponseInterface
+     * @throws RateLimitReached
+     * @throws IdentityProviderException|MissingRefreshToken
+     * @throws TransportExceptionInterface
+     * @throws ServerError
      */
-    public function get(string $uri, array $query): ResponseInterface
+    public function get(string $uri, array $query = []): ResponseInterface
     {
         $uri = $this->buildUri($uri, $query);
         return $this->doRequest("GET", $uri);
