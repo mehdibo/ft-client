@@ -1,5 +1,5 @@
 {
-    "name": "mehdibo/ft-sdk",
+    "name": "mehdibo/ft-client",
     "description": "Client library for Forty Two Intranet API",
     "type": "library",
     "license": "MIT",
