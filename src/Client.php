@@ -166,4 +166,18 @@ class Client
         $uri = $this->buildUri($uri, $query);
         return $this->doRequest("GET", $uri);
     }
+
+    /**
+     * @param string $uri
+     * @param array $payload
+     * @return ResponseInterface
+     * @throws RateLimitReached
+     * @throws IdentityProviderException
+     * @throws TransportExceptionInterface
+     * @throws ServerError
+     */
+    public function post(string $uri, array $payload): ResponseInterface
+    {
+        return $this->doRequest("POST", $uri, ["json" => $payload]);
+    }
 }

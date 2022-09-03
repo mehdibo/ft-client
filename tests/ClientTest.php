@@ -137,12 +137,11 @@ class ClientTest extends TestCase
     }
 
     /**
-     * @dataProvider failedGetDataProvider
+     * @dataProvider failedRequestDataProvider
      */
     public function testFailedGet(
         string $expectedUrl,
         string $uri,
-        array $query,
         ResponseInterface $response,
         string $expectedException,
         string $expectedExceptionMessage,
@@ -164,7 +163,70 @@ class ClientTest extends TestCase
 
         $this->expectException($expectedException);
         $this->expectExceptionMessage($expectedExceptionMessage);
-        $client->get($uri, $query);
+        $client->get($uri, []);
+    }
+
+    /**
+     * @dataProvider failedRequestDataProvider
+     */
+    public function testFailedPost(
+        string $expectedUrl,
+        string $uri,
+        ResponseInterface $response,
+        string $expectedException,
+        string $expectedExceptionMessage,
+    ): void
+    {
+        $expectedOptions = [
+            'headers' => [
+                'Authorization' => 'Bearer access_token',
+                'User-Agent' => 'Mehdibo-FT-Client/'.Client::VERSION,
+            ],
+            "json" => [],
+        ];
+        $client = $this->createClient(
+            1,
+            "POST",
+            $expectedUrl,
+            $expectedOptions,
+            $response,
+        );
+
+        $this->expectException($expectedException);
+        $this->expectExceptionMessage($expectedExceptionMessage);
+        $client->post($uri, []);
+    }
+
+    /**
+     * @dataProvider successfulPostDataProvider
+     */
+    public function testSuccessfulPost(
+        string $expectedUrl,
+        string $uri,
+        array $payload,
+        bool $hasExpiredToken,
+    ): void
+    {
+        $response = $this->createMock(ResponseInterface::class);
+        $response->method("getStatusCode")->willReturn(200);
+
+        $expectedOptions = [
+            'headers' => [
+                'Authorization' => 'Bearer access_token',
+                'User-Agent' => 'Mehdibo-FT-Client/'.Client::VERSION,
+            ],
+            "json" => $payload,
+        ];
+        $client = $this->createClient(
+            1,
+            "POST",
+            $expectedUrl,
+            $expectedOptions,
+            $response,
+            $hasExpiredToken,
+        );
+
+        $client->post($uri, $payload);
     }
 
     /**
@@ -219,7 +281,7 @@ class ClientTest extends TestCase
     /**
      * @return array<string, mixed>
      */
-    public function failedGetDataProvider(): array
+    public function failedRequestDataProvider(): array
     {
         $respRateLimit = $this->createMock(ResponseInterface::class);
         $respRateLimit->method('getStatusCode')->willReturn(429);
@@ -235,7 +297,6 @@ class ClientTest extends TestCase
             "rate limit reached" => [
                 'https://api.intra.42.fr/v2/some_endpoint',
                 'some_endpoint',
-                [],
                 $respRateLimit,
                 RateLimitReached::class,
                 "Rate limit reached",
@@ -243,10 +304,46 @@ class ClientTest extends TestCase
             "internal server error" => [
                 'https://api.intra.42.fr/v2/some_endpoint',
                 'some_endpoint',
-                [],
                 $serverErrorResp,
                 ServerError::class,
                 "Intranet API returned a 500 Internal Server Error",
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function successfulPostDataProvider(): array
+    {
+        return [
+            "empty payload" => [
+                'https://api.intra.42.fr/v2/user/here/path',
+                "/user/here/path",
+                [],
+                false,
+            ],
+            "payload" => [
+                'https://api.intra.42.fr/v2/user/here/path',
+                "/user/here/path",
+                [
+                    "user" => [
+                        "id" => 1,
+                        "username" => "hello",
+                    ],
+                ],
+                false,
+            ],
+            "expired token" => [
+                'https://api.intra.42.fr/v2/user/here/path',
+                "/user/here/path",
+                [
+                    "user" => [
+                        "id" => 1,
+                        "username" => "hello",
+                    ],
+                ],
+                true,
             ],
         ];
     }
