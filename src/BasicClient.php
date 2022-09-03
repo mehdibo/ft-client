@@ -12,7 +12,7 @@ use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-class Client
+class BasicClient
 {
     public const VERSION = "v1.0.0";
 
@@ -38,7 +38,7 @@ class Client
         return $this->provider;
     }
 
-    public function withProvider(FortyTwo $provider): Client
+    public function withProvider(FortyTwo $provider): BasicClient
     {
         $client = clone $this;
         $client->provider = $provider;
@@ -62,7 +62,7 @@ class Client
     }
 
     /**
-     * Fetch an access token using the Client Credentials grant
+     * Fetch an access token using the BasicClient Credentials grant
      * @throws IdentityProviderException
      */
     public function fetchTokenFromClientCredentials(): void
@@ -81,7 +81,7 @@ class Client
         }
         $refreshToken = $this->accessToken?->getRefreshToken();
         if ($refreshToken === null) {
-            // A refresh token is not provided with the Client Credentials grant
+            // A refresh token is not provided with the BasicClient Credentials grant
             $this->fetchTokenFromClientCredentials();
             return;
         }
@@ -122,7 +122,7 @@ class Client
     {
         $uri = self::BASE_URL . ltrim($uri, "/");
         $options["headers"]["Authorization"] = "Bearer " . $this->getToken();
-        $options["headers"]["User-Agent"] = "Mehdibo-FT-Client/".self::VERSION;
+        $options["headers"]["User-Agent"] = "Mehdibo-FT-BasicClient/".self::VERSION;
         $resp = $this->httpClient->request($method, $uri, $options);
         switch ($resp->getStatusCode()) {
             // Rate limit reached

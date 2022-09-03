@@ -3,7 +3,7 @@
 namespace Mehdibo\FortyTwo\Client\Test;
 
 use League\OAuth2\Client\Token\AccessTokenInterface;
-use Mehdibo\FortyTwo\Client\Client;
+use Mehdibo\FortyTwo\Client\BasicClient;
 use Mehdibo\FortyTwo\Client\Exception\RateLimitReached;
 use Mehdibo\FortyTwo\Client\Exception\ServerError;
 use Mehdibo\OAuth2\Client\Provider\FortyTwo;
@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-class ClientTest extends TestCase
+class BasicClientTest extends TestCase
 {
 
     /**
@@ -35,7 +35,7 @@ class ClientTest extends TestCase
         array $expectedOptions = [],
         ResponseInterface|null $response = null,
         bool $hasExpiredToken = false,
-    ): Client {
+    ): BasicClient {
         if ($response === null) {
             $response = $this->createMock(ResponseInterface::class);
         }
@@ -54,7 +54,7 @@ class ClientTest extends TestCase
             ->method('request')
             ->with($expectedMethod, $expectedUrl, $expectedOptions)
             ->willReturn($response);
-        return new Client(
+        return new BasicClient(
             $provider,
             $httpClient,
         );
@@ -84,7 +84,7 @@ class ClientTest extends TestCase
             ->with('authorization_code', ['code' => 'some_code'])
             ->willReturn($accessToken);
 
-        $client = new Client($provider);
+        $client = new BasicClient($provider);
         $this->assertNull($client->getAccessToken());
         $client->fetchTokenFromAuthCode('some_code');
         $this->assertEquals($accessToken, $client->getAccessToken());
@@ -99,7 +99,7 @@ class ClientTest extends TestCase
             ->with('client_credentials')
             ->willReturn($accessToken);
 
-        $client = new Client($provider);
+        $client = new BasicClient($provider);
         $this->assertNull($client->getAccessToken());
         $client->fetchTokenFromClientCredentials();
         $this->assertEquals($accessToken, $client->getAccessToken());
@@ -121,7 +121,7 @@ class ClientTest extends TestCase
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
-                'User-Agent' => 'Mehdibo-FT-Client/'.Client::VERSION,
+                'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
             ],
         ];
         $client = $this->createClient(
@@ -150,7 +150,7 @@ class ClientTest extends TestCase
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
-                'User-Agent' => 'Mehdibo-FT-Client/'.Client::VERSION,
+                'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
             ],
         ];
         $client = $this->createClient(
@@ -180,7 +180,7 @@ class ClientTest extends TestCase
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
-                'User-Agent' => 'Mehdibo-FT-Client/'.Client::VERSION,
+                'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
             ],
             "json" => [],
         ];
@@ -213,7 +213,7 @@ class ClientTest extends TestCase
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
-                'User-Agent' => 'Mehdibo-FT-Client/'.Client::VERSION,
+                'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
             ],
             "json" => $payload,
         ];
@@ -245,7 +245,7 @@ class ClientTest extends TestCase
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
-                'User-Agent' => 'Mehdibo-FT-Client/'.Client::VERSION,
+                'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
             ],
             "json" => $payload,
         ];
@@ -275,7 +275,7 @@ class ClientTest extends TestCase
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
-                'User-Agent' => 'Mehdibo-FT-Client/'.Client::VERSION,
+                'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
             ],
             "json" => [],
         ];
@@ -307,7 +307,7 @@ class ClientTest extends TestCase
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
-                'User-Agent' => 'Mehdibo-FT-Client/'.Client::VERSION,
+                'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
             ],
         ];
         $client = $this->createClient(
@@ -336,7 +336,7 @@ class ClientTest extends TestCase
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
-                'User-Agent' => 'Mehdibo-FT-Client/'.Client::VERSION,
+                'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
             ],
         ];
         $client = $this->createClient(
