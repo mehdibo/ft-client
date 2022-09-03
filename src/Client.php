@@ -194,4 +194,17 @@ class Client
     {
         return $this->doRequest("PATCH", $uri, ["json" => $payload]);
     }
+
+    /**
+     * @param string $uri
+     * @return ResponseInterface
+     * @throws RateLimitReached
+     * @throws IdentityProviderException
+     * @throws TransportExceptionInterface
+     * @throws ServerError
+     */
+    public function delete(string $uri): ResponseInterface
+    {
+        return $this->doRequest("DELETE", $uri);
+    }
 }

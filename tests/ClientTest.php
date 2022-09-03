@@ -293,6 +293,66 @@ class ClientTest extends TestCase
     }
 
     /**
+     * @dataProvider successfulDeleteDataProvider
+     */
+    public function testSuccessfulDelete(
+        string $expectedUrl,
+        string $uri,
+        bool $hasExpiredToken,
+    ): void
+    {
+        $response = $this->createMock(ResponseInterface::class);
+        $response->method("getStatusCode")->willReturn(200);
+
+        $expectedOptions = [
+            'headers' => [
+                'Authorization' => 'Bearer access_token',
+                'User-Agent' => 'Mehdibo-FT-Client/'.Client::VERSION,
+            ],
+        ];
+        $client = $this->createClient(
+            1,
+            "DELETE",
+            $expectedUrl,
+            $expectedOptions,
+            $response,
+            $hasExpiredToken,
+        );
+
+        $client->delete($uri);
+    }
+
+    /**
+     * @dataProvider failedRequestDataProvider
+     */
+    public function testFailedDelete(
+        string $expectedUrl,
+        string $uri,
+        ResponseInterface $response,
+        string $expectedException,
+        string $expectedExceptionMessage,
+    ): void
+    {
+        $expectedOptions = [
+            'headers' => [
+                'Authorization' => 'Bearer access_token',
+                'User-Agent' => 'Mehdibo-FT-Client/'.Client::VERSION,
+            ],
+        ];
+        $client = $this->createClient(
+            1,
+            "DELETE",
+            $expectedUrl,
+            $expectedOptions,
+            $response,
+        );
+
+        $this->expectException($expectedException);
+        $this->expectExceptionMessage($expectedExceptionMessage);
+        $client->delete($uri);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function successfulGetDataProvider(): array
@@ -414,5 +474,21 @@ class ClientTest extends TestCase
     public function successfulPatchDataProvider(): array
     {
         return $this->successfulPostDataProvider();
+    }
+
+    public function successfulDeleteDataProvider(): array
+    {
+        return [
+            "basic request" => [
+                'https://api.intra.42.fr/v2/user/here/path',
+                "/user/here/path",
+                false,
+            ],
+            "expired token" => [
+                'https://api.intra.42.fr/v2/user/here/path',
+                "/user/here/path",
+                true,
+            ],
+        ];
     }
 }
