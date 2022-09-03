@@ -145,7 +145,11 @@ class Client
     private function buildUri(string $uri, array $query): string
     {
         $uri = rtrim($uri, '/');
-        return $uri . "?" . http_build_query($query);
+        $queryStr = http_build_query($query);
+        if (!empty($queryStr)) {
+            $uri .= "?". $queryStr;
+        }
+        return $uri;
     }
 
     /**
