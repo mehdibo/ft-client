@@ -4,6 +4,8 @@ namespace Mehdibo\FortyTwo\Client\Test;
 
 use League\OAuth2\Client\Token\AccessTokenInterface;
 use Mehdibo\FortyTwo\Client\Client;
+use Mehdibo\FortyTwo\Client\Exception\RateLimitReached;
+use Mehdibo\FortyTwo\Client\Exception\ServerError;
 use Mehdibo\OAuth2\Client\Provider\FortyTwo;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -103,11 +105,19 @@ class ClientTest extends TestCase
         $this->assertEquals($accessToken, $client->getAccessToken());
     }
 
-    public function testGet(): void
+    /**
+     * @dataProvider successfulGetDataProvider
+     */
+    public function testSuccessfulGet(
+        string $expectedUrl,
+        string $uri,
+        array $query,
+        bool $hasExpiredToken,
+    ): void
     {
-        $expectedRequests = 1;
-        $expectedMethod = "GET";
-        $expectedUrl = 'https://api.intra.42.fr/v2/some_endpoint?filter%5Bfield%5D=value';
+        $response = $this->createMock(ResponseInterface::class);
+        $response->method("getStatusCode")->willReturn(200);
+
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
@@ -115,22 +125,129 @@ class ClientTest extends TestCase
             ],
         ];
         $client = $this->createClient(
-            $expectedRequests,
-            $expectedMethod,
+            1,
+            "GET",
             $expectedUrl,
             $expectedOptions,
+            $response,
+            $hasExpiredToken,
         );
 
-        $client->get("/some_endpoint", ["filter[field]" => "value"]);
+        $client->get($uri, $query);
+    }
 
+    /**
+     * @dataProvider failedGetDataProvider
+     */
+    public function testFailedGet(
+        string $expectedUrl,
+        string $uri,
+        array $query,
+        ResponseInterface $response,
+        string $expectedException,
+        string $expectedExceptionMessage,
+    ): void
+    {
+        $expectedOptions = [
+            'headers' => [
+                'Authorization' => 'Bearer access_token',
+                'User-Agent' => 'Mehdibo-FT-Client/'.Client::VERSION,
+            ],
+        ];
         $client = $this->createClient(
-            $expectedRequests,
-            $expectedMethod,
+            1,
+            "GET",
             $expectedUrl,
             $expectedOptions,
-            hasExpiredToken: true,
+            $response,
         );
 
-        $client->get("/some_endpoint", ["filter[field]" => "value"]);
+        $this->expectException($expectedException);
+        $this->expectExceptionMessage($expectedExceptionMessage);
+        $client->get($uri, $query);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function successfulGetDataProvider(): array
+    {
+        return [
+            "expired token" => [
+                'https://api.intra.42.fr/v2/some_endpoint',
+                'some_endpoint',
+                [],
+                true,
+            ],
+            "no queries" => [
+                'https://api.intra.42.fr/v2/some_endpoint',
+                'some_endpoint',
+                [],
+                false,
+            ],
+            "basic query" => [
+                'https://api.intra.42.fr/v2/some_endpoint?key=val',
+                'some_endpoint',
+                ['key' => 'val'],
+                false,
+            ],
+            "query with special characters" => [
+                'https://api.intra.42.fr/v2/some_endpoint?key=val&something%5Bhere%5D=some+value&something'
+                . '%5Bthere%5D=some%2Fother',
+                'some_endpoint',
+                [
+                    'key' => 'val',
+                    "something[here]" => "some value",
+                    "something[there]" => "some/other",
+                ],
+                false,
+            ],
+            "query with nested array" => [
+                'https://api.intra.42.fr/v2/some_endpoint?filter%5Bfield%5D=1%2C2%2C3&sort%5B0%5D=data',
+                'some_endpoint',
+                [
+                    'filter' => [
+                        "field" => "1,2,3",
+                    ],
+                    'sort' => ["data"],
+                ],
+                false,
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function failedGetDataProvider(): array
+    {
+        $respRateLimit = $this->createMock(ResponseInterface::class);
+        $respRateLimit->method('getStatusCode')->willReturn(429);
+        $respRateLimit->method('getHeaders')->willReturn([
+            "retry-after" => [1],
+        ]);
+
+        $serverErrorResp = $this->createMock(ResponseInterface::class);
+        $serverErrorResp->method('getStatusCode')->willReturn(500);
+
+
+        return [
+            "rate limit reached" => [
+                'https://api.intra.42.fr/v2/some_endpoint',
+                'some_endpoint',
+                [],
+                $respRateLimit,
+                RateLimitReached::class,
+                "Rate limit reached",
+            ],
+            "internal server error" => [
+                'https://api.intra.42.fr/v2/some_endpoint',
+                'some_endpoint',
+                [],
+                $serverErrorResp,
+                ServerError::class,
+                "Intranet API returned a 500 Internal Server Error",
+            ],
+        ];
     }
 }
