@@ -115,6 +115,7 @@ class BasicClientTest extends TestCase
     }
 
     /**
+     * @param array<string, string> $query
      * @dataProvider successfulGetDataProvider
      */
     public function testSuccessfulGet(
@@ -146,6 +147,7 @@ class BasicClientTest extends TestCase
     }
 
     /**
+     * @param class-string<\Throwable> $expectedException
      * @dataProvider failedRequestDataProvider
      */
     public function testFailedGet(
@@ -176,6 +178,7 @@ class BasicClientTest extends TestCase
     }
 
     /**
+     * @param class-string<\Throwable> $expectedException
      * @dataProvider failedRequestDataProvider
      */
     public function testFailedPost(
@@ -207,6 +210,7 @@ class BasicClientTest extends TestCase
     }
 
     /**
+     * @param array<string, mixed> $payload
      * @dataProvider successfulPostDataProvider
      */
     public function testSuccessfulPost(
@@ -239,6 +243,7 @@ class BasicClientTest extends TestCase
     }
 
     /**
+     * @param array<string, mixed> $payload
      * @dataProvider successfulPatchDataProvider
      */
     public function testSuccessfulPatch(
@@ -271,6 +276,7 @@ class BasicClientTest extends TestCase
     }
 
     /**
+     * @param class-string<\Throwable> $expectedException
      * @dataProvider failedRequestDataProvider
      */
     public function testFailedPatch(
@@ -332,6 +338,7 @@ class BasicClientTest extends TestCase
     }
 
     /**
+     * @param class-string<\Throwable> $expectedException
      * @dataProvider failedRequestDataProvider
      */
     public function testFailedDelete(
@@ -401,10 +408,13 @@ class BasicClientTest extends TestCase
                 ], $options);
 
                 // Response is always 3 pages and the last page only contains half the items
+                /**
+                 * @var array<int<0, max>> $pages
+                 */
                 $pages = [
                     $perPage,
                     $perPage,
-                    $perPage / 2,
+                    (int) ($perPage / 2),
                 ];
 
                 // We create a response based on the Page number
@@ -507,6 +517,9 @@ class BasicClientTest extends TestCase
             }
         } catch (\Exception $e) {
             $this->assertInstanceOf(EnumerationRateLimited::class, $e);
+            /**
+             * @var EnumerationRateLimited $e
+             */
             $this->assertEquals(42, $e->retryAfter);
             $this->assertEquals(3, $e->reachedPage);
         }
@@ -632,11 +645,17 @@ class BasicClientTest extends TestCase
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function successfulPatchDataProvider(): array
     {
         return $this->successfulPostDataProvider();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function successfulDeleteDataProvider(): array
     {
         return [
