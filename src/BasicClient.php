@@ -18,7 +18,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 class BasicClient
 {
-    public const VERSION = "v1.0.0";
+    public const VERSION = "v1.0";
 
     private const BASE_URL = "https://api.intra.42.fr/v2/";
 
