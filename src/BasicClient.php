@@ -4,6 +4,7 @@ namespace Mehdibo\FortyTwo\Client;
 
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessTokenInterface;
+use Mehdibo\FortyTwo\Client\Exception\EnumerationRateLimited;
 use Mehdibo\FortyTwo\Client\Exception\RateLimitReached;
 use Mehdibo\FortyTwo\Client\Exception\ServerError;
 use Mehdibo\OAuth2\Client\Provider\FortyTwo;
@@ -172,7 +173,7 @@ class BasicClient
 
     /**
      * @param string $uri
-     * @param array $payload
+     * @param array<string|int, mixed> $payload
      * @return ResponseInterface
      * @throws RateLimitReached
      * @throws IdentityProviderException
@@ -186,7 +187,7 @@ class BasicClient
 
     /**
      * @param string $uri
-     * @param array $payload
+     * @param array<string|int, mixed> $payload
      * @return ResponseInterface
      * @throws RateLimitReached
      * @throws IdentityProviderException
@@ -209,5 +210,43 @@ class BasicClient
     public function delete(string $uri): ResponseInterface
     {
         return $this->doRequest("DELETE", $uri);
+    }
+
+
+    /**
+     * Enumerate a resource and return all the items by navigating all pages
+     * @param array<string, string> $query
+     * @param int $maxItems Maximum of items to return. If 0, all items will be returned
+     * @param int $startPage Page to start from
+     * @return \Generator<int, array<string, mixed>>
+     * @throws IdentityProviderException
+     * @throws TransportExceptionInterface
+     * @throws ServerError
+     * @throws EnumerationRateLimited
+     */
+    public function enumerate(string $uri, array $query = [], int $maxItems = 0, int $startPage = 1): \Generator
+    {
+        $page = ($startPage <= 0) ? 1 : $startPage;
+        $perPage = ($maxItems !== 0 && $maxItems < 100) ? $maxItems : 100;
+        $query["page"] = (string) $page;
+        $query["per_page"] = (string) $perPage;
+        $itemsCount = 0;
+        do {
+            try {
+                $resp = $this->get($uri, $query);
+            } catch (RateLimitReached $e) {
+                throw new EnumerationRateLimited($page, $e);
+            }
+            $items = $resp->toArray();
+            $page++;
+            $query["page"] = (string) $page;
+            foreach ($items as $item) {
+                yield $item;
+                $itemsCount++;
+                if ($maxItems !== 0 && $itemsCount >= $maxItems) {
+                    break 2;
+                }
+            }
+        } while (count($items) >= $perPage && ($maxItems === 0 || $itemsCount < $maxItems));
     }
 }

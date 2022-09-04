@@ -4,6 +4,7 @@ namespace Mehdibo\FortyTwo\Client\Test;
 
 use League\OAuth2\Client\Token\AccessTokenInterface;
 use Mehdibo\FortyTwo\Client\BasicClient;
+use Mehdibo\FortyTwo\Client\Exception\EnumerationRateLimited;
 use Mehdibo\FortyTwo\Client\Exception\RateLimitReached;
 use Mehdibo\FortyTwo\Client\Exception\ServerError;
 use Mehdibo\OAuth2\Client\Provider\FortyTwo;
@@ -18,11 +19,25 @@ class BasicClientTest extends TestCase
     /**
      * @return FortyTwo&MockObject
      */
-    private function createProvider(): FortyTwo
+    private function createProvider(AccessTokenInterface $accessToken): FortyTwo
     {
         $provider = $this->createMock(FortyTwo::class);
-
+        $provider->method('getAccessToken')->willReturn($accessToken);
         return $provider;
+    }
+
+    /**
+     * @return AccessTokenInterface&MockObject
+     */
+    private function createAccessToken(bool $hasExpiredToken = false): AccessTokenInterface
+    {
+        $accessToken = $this->createMock(AccessTokenInterface::class);
+        $accessToken->expects(($hasExpiredToken) ? $this->once() : $this->never())
+            ->method('getRefreshToken')
+            ->willReturn("refresh_token");
+        $accessToken->method('getToken')->willReturn("access_token");
+        $accessToken->method('hasExpired')->willReturn($hasExpiredToken);
+        return $accessToken;
     }
 
     /**
@@ -40,14 +55,8 @@ class BasicClientTest extends TestCase
             $response = $this->createMock(ResponseInterface::class);
         }
 
-        $accessToken = $this->createMock(AccessTokenInterface::class);
-        $accessToken->expects(($hasExpiredToken) ? $this->once() : $this->never())
-            ->method('getRefreshToken')
-            ->willReturn("refresh_token");
-        $accessToken->method('getToken')->willReturn("access_token");
-        $accessToken->method('hasExpired')->willReturn($hasExpiredToken);
-        $provider = $this->createProvider();
-        $provider->method('getAccessToken')->willReturn($accessToken);
+        $accessToken = $this->createAccessToken($hasExpiredToken);
+        $provider = $this->createProvider($accessToken);
 
         $httpClient = $this->createMock(HttpClientInterface::class);
         $httpClient->expects($this->exactly($expectedRequests))
@@ -78,7 +87,7 @@ class BasicClientTest extends TestCase
     public function testFetchTokenFromAuthCode(): void
     {
         $accessToken = $this->createMock(AccessTokenInterface::class);
-        $provider = $this->createProvider();
+        $provider = $this->createProvider($accessToken);
         $provider->expects($this->once())
             ->method('getAccessToken')
             ->with('authorization_code', ['code' => 'some_code'])
@@ -93,7 +102,7 @@ class BasicClientTest extends TestCase
     public function testFetchTokenFromClientCredentials(): void
     {
         $accessToken = $this->createMock(AccessTokenInterface::class);
-        $provider = $this->createProvider();
+        $provider = $this->createProvider($accessToken);
         $provider->expects($this->once())
             ->method('getAccessToken')
             ->with('client_credentials')
@@ -353,6 +362,158 @@ class BasicClientTest extends TestCase
     }
 
     /**
+     * @dataProvider enumerateDataProvider
+     */
+    public function testEnumerate(
+        int $maxItems,
+        int $startPage,
+        int $expectedItemsCount,
+        int $expectedPagesCount,
+    ): void
+    {
+        $provider = $this->createProvider($this->createAccessToken());
+
+        $httpClient = $this->createMock(HttpClientInterface::class);
+        $httpClient->expects($this->exactly($expectedPagesCount))
+            ->method('request')
+            ->willReturnCallback(
+                function (string $method, string $endpoint, array $options) use ($maxItems, $startPage) {
+                static $pageI = 0;
+
+                // Maximum items per page cannot exceed 100
+                $perPage = ($maxItems !== 0 && $maxItems < 100) ? $maxItems : 100;
+
+                // We calculate the current page based on the start page and how many requests have been made
+                $startPage = ($startPage <= 0) ? 1 : $startPage;
+                $currentPage = $startPage + $pageI;
+
+                $this->assertEquals("GET", $method);
+                $this->assertEquals(
+                    "https://api.intra.42.fr/v2/some_endpoint?filter%5Bfield%5D=value"
+                    ."&page=".$currentPage."&per_page=".$perPage,
+                    $endpoint,
+                );
+                $this->assertEquals([
+                    'headers' => [
+                        'Authorization' => 'Bearer access_token',
+                        'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
+                    ],
+                ], $options);
+
+                // Response is always 3 pages and the last page only contains half the items
+                $pages = [
+                    $perPage,
+                    $perPage,
+                    $perPage / 2,
+                ];
+
+                // We create a response based on the Page number
+                $resp = $this->createMock(ResponseInterface::class);
+                $resp->method('getStatusCode')->willReturn(200);
+                $resp->method('toArray')
+                    ->willReturn(
+                        array_fill(0, $pages[$startPage + $pageI - 1], [
+                            "id" => 1,
+                            "username" => "someone",
+                        ]),
+                    );
+                $pageI++;
+                return $resp;
+            },
+        );
+
+        $client = new BasicClient($provider, $httpClient);
+        $generator = $client->enumerate("/some_endpoint", ["filter[field]" => "value"], $maxItems, $startPage);
+        $this->assertIsIterable($generator);
+        $itemCount = 0;
+        foreach ($generator as $item) {
+            $this->assertEquals(1, $item["id"]);
+            $this->assertEquals("someone", $item["username"]);
+            $itemCount++;
+        }
+        $this->assertEquals($expectedItemsCount, $itemCount);
+    }
+
+    public function testEnumerateReachesRateLimit(): void
+    {
+        $provider = $this->createProvider($this->createAccessToken());
+
+        $httpClient = $this->createMock(HttpClientInterface::class);
+        $httpClient->expects($this->exactly(3))
+            ->method('request')
+            ->willReturnCallback(
+                function (string $method, string $endpoint, array $options) {
+                    static $pageI = 0;
+
+                    $startPage = 1;
+                    // Maximum items per page cannot exceed 100
+                    $perPage = 100;
+
+                    // We calculate the current page based on the start page and how many requests have been made
+                    $currentPage = $startPage + $pageI;
+
+                    $this->assertEquals("GET", $method);
+                    $this->assertEquals(
+                        "https://api.intra.42.fr/v2/some_endpoint?filter%5Bfield%5D=value"
+                        ."&page=".$currentPage."&per_page=".$perPage,
+                        $endpoint,
+                    );
+                    $this->assertEquals([
+                        'headers' => [
+                            'Authorization' => 'Bearer access_token',
+                            'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
+                        ],
+                    ], $options);
+
+                    // Response is always 3 pages and the last page only contains half the items
+                    $pages = [
+                        $perPage,
+                        $perPage,
+                    ];
+
+                    $resp = $this->createMock(ResponseInterface::class);
+
+                    if ($pageI === 2) {
+                        $resp->method('getStatusCode')->willReturn(429);
+                        $resp->method('getHeaders')->willReturn([
+                            'retry-after' => [42],
+                        ]);
+                        return $resp;
+                    }
+
+                    // We create a response based on the Page number
+                    $resp->method('getStatusCode')->willReturn(200);
+                    $resp->method('toArray')
+                        ->willReturn(
+                            array_fill(0, $pages[$startPage + $pageI - 1], [
+                                "id" => 1,
+                                "username" => "someone",
+                            ]),
+                        );
+                    $pageI++;
+                    return $resp;
+                },
+            );
+
+        $client = new BasicClient($provider, $httpClient);
+        $generator = $client->enumerate("/some_endpoint", ["filter[field]" => "value"]);
+        $this->assertIsIterable($generator);
+        $itemCount = 0;
+        try {
+            foreach ($generator as $item) {
+                $this->assertEquals(1, $item["id"]);
+                $this->assertEquals("someone", $item["username"]);
+                $itemCount++;
+            }
+        } catch (\Exception $e) {
+            $this->assertInstanceOf(EnumerationRateLimited::class, $e);
+            $this->assertEquals(42, $e->retryAfter);
+            $this->assertEquals(3, $e->reachedPage);
+        }
+        $this->assertEquals(200, $itemCount);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function successfulGetDataProvider(): array
@@ -488,6 +649,63 @@ class BasicClientTest extends TestCase
                 'https://api.intra.42.fr/v2/user/here/path',
                 "/user/here/path",
                 true,
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, int[]>
+     */
+    public function enumerateDataProvider(): array
+    {
+        return [
+            "no max item and start from negative page" => [
+                0,
+                -1,
+                250,
+                3,
+            ],
+            "no max item and start from page zero" => [
+                0,
+                0,
+                250,
+                3,
+            ],
+            "no max item and start from first page" => [
+                0,
+                1,
+                250,
+                3,
+            ],
+            "no max item and start from second page" => [
+                0,
+                2,
+                150,
+                2,
+            ],
+            "no max item and start from last page" => [
+                0,
+                3,
+                50,
+                1,
+            ],
+            "max item and start from first page" => [
+                200,
+                1,
+                200,
+                2,
+            ],
+            "max item and start from second page" => [
+                200,
+                2,
+                150,
+                2,
+            ],
+            "max item and start from last page" => [
+                200,
+                3,
+                50,
+                1,
             ],
         ];
     }
