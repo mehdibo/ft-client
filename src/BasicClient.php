@@ -126,7 +126,7 @@ class BasicClient
     {
         $uri = self::BASE_URL . ltrim($uri, "/");
         $options["headers"]["Authorization"] = "Bearer " . $this->getToken();
-        $options["headers"]["User-Agent"] = "Mehdibo-FT-BasicClient/".self::VERSION;
+        $options["headers"]["User-Agent"] = "Mehdibo-FT-Client/".self::VERSION;
         $resp = $this->httpClient->request($method, $uri, $options);
         switch ($resp->getStatusCode()) {
             // Rate limit reached
