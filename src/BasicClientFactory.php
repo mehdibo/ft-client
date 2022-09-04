@@ -6,7 +6,8 @@ use Mehdibo\OAuth2\Client\Provider\FortyTwo;
 
 class BasicClientFactory
 {
-    public static function createFromCredentials(string $clientId, string $clientSecret, string $redirectUri): BasicClient {
+    public static function createFromCredentials(string $clientId, string $clientSecret, string $redirectUri): BasicClient
+    {
         $provider = new FortyTwo([
             'clientId' => $clientId,
             'clientSecret' => $clientSecret,

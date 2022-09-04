@@ -125,8 +125,7 @@ class BasicClientTest extends TestCase
         string $uri,
         array $query,
         bool $hasExpiredToken,
-    ): void
-    {
+    ): void {
         $response = $this->createMock(ResponseInterface::class);
         $response->method("getStatusCode")->willReturn(200);
 
@@ -158,8 +157,7 @@ class BasicClientTest extends TestCase
         ResponseInterface $response,
         string $expectedException,
         string $expectedExceptionMessage,
-    ): void
-    {
+    ): void {
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
@@ -189,8 +187,7 @@ class BasicClientTest extends TestCase
         ResponseInterface $response,
         string $expectedException,
         string $expectedExceptionMessage,
-    ): void
-    {
+    ): void {
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
@@ -220,8 +217,7 @@ class BasicClientTest extends TestCase
         string $uri,
         array $payload,
         bool $hasExpiredToken,
-    ): void
-    {
+    ): void {
         $response = $this->createMock(ResponseInterface::class);
         $response->method("getStatusCode")->willReturn(200);
 
@@ -253,8 +249,7 @@ class BasicClientTest extends TestCase
         string $uri,
         array $payload,
         bool $hasExpiredToken,
-    ): void
-    {
+    ): void {
         $response = $this->createMock(ResponseInterface::class);
         $response->method("getStatusCode")->willReturn(200);
 
@@ -287,8 +282,7 @@ class BasicClientTest extends TestCase
         ResponseInterface $response,
         string $expectedException,
         string $expectedExceptionMessage,
-    ): void
-    {
+    ): void {
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
@@ -316,8 +310,7 @@ class BasicClientTest extends TestCase
         string $expectedUrl,
         string $uri,
         bool $hasExpiredToken,
-    ): void
-    {
+    ): void {
         $response = $this->createMock(ResponseInterface::class);
         $response->method("getStatusCode")->willReturn(200);
 
@@ -349,8 +342,7 @@ class BasicClientTest extends TestCase
         ResponseInterface $response,
         string $expectedException,
         string $expectedExceptionMessage,
-    ): void
-    {
+    ): void {
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
@@ -378,8 +370,7 @@ class BasicClientTest extends TestCase
         int $startPage,
         int $expectedItemsCount,
         int $expectedPagesCount,
-    ): void
-    {
+    ): void {
         $provider = $this->createProvider($this->createAccessToken());
 
         $httpClient = $this->createMock(HttpClientInterface::class);
@@ -387,52 +378,52 @@ class BasicClientTest extends TestCase
             ->method('request')
             ->willReturnCallback(
                 function (string $method, string $endpoint, array $options) use ($maxItems, $startPage) {
-                static $pageI = 0;
+                    static $pageI = 0;
 
                 // Maximum items per page cannot exceed 100
-                $perPage = ($maxItems !== 0 && $maxItems < 100) ? $maxItems : 100;
+                    $perPage = ($maxItems !== 0 && $maxItems < 100) ? $maxItems : 100;
 
                 // We calculate the current page based on the start page and how many requests have been made
-                $startPage = ($startPage <= 0) ? 1 : $startPage;
-                $currentPage = $startPage + $pageI;
+                    $startPage = ($startPage <= 0) ? 1 : $startPage;
+                    $currentPage = $startPage + $pageI;
 
-                $this->assertEquals("GET", $method);
-                $this->assertEquals(
-                    "https://api.intra.42.fr/v2/some_endpoint?filter%5Bfield%5D=value"
-                    ."&page=".$currentPage."&per_page=".$perPage,
-                    $endpoint,
-                );
-                $this->assertEquals([
+                    $this->assertEquals("GET", $method);
+                    $this->assertEquals(
+                        "https://api.intra.42.fr/v2/some_endpoint?filter%5Bfield%5D=value"
+                        ."&page=".$currentPage."&per_page=".$perPage,
+                        $endpoint,
+                    );
+                    $this->assertEquals([
                     'headers' => [
                         'Authorization' => 'Bearer access_token',
                         'User-Agent' => self::USER_AGENT,
                     ],
-                ], $options);
+                    ], $options);
 
                 // Response is always 3 pages and the last page only contains half the items
                 /**
                  * @var array<int<0, max>> $pages
                  */
-                $pages = [
+                    $pages = [
                     $perPage,
                     $perPage,
                     (int) ($perPage / 2),
-                ];
+                    ];
 
                 // We create a response based on the Page number
-                $resp = $this->createMock(ResponseInterface::class);
-                $resp->method('getStatusCode')->willReturn(200);
-                $resp->method('toArray')
+                    $resp = $this->createMock(ResponseInterface::class);
+                    $resp->method('getStatusCode')->willReturn(200);
+                    $resp->method('toArray')
                     ->willReturn(
                         array_fill(0, $pages[$startPage + $pageI - 1], [
                             "id" => 1,
                             "username" => "someone",
                         ]),
                     );
-                $pageI++;
-                return $resp;
-            },
-        );
+                    $pageI++;
+                    return $resp;
+                },
+            );
 
         $client = new BasicClient($provider, $httpClient);
         $generator = $client->enumerate("/some_endpoint", ["filter[field]" => "value"], $maxItems, $startPage);

@@ -19,5 +19,4 @@ class EnumerationRateLimited extends \Exception
         $this->retryAfter = $rateLimitReached->retryAfter;
         parent::__construct($rateLimitReached->getMessage(), $rateLimitReached->getCode(), $rateLimitReached);
     }
-
 }
