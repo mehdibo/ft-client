@@ -16,6 +16,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 class BasicClientTest extends TestCase
 {
 
+    private const USER_AGENT = "Mehdibo-FT-Client/".BasicClient::VERSION;
+
     /**
      * @return FortyTwo&MockObject
      */
@@ -131,7 +133,7 @@ class BasicClientTest extends TestCase
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
-                'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
+                'User-Agent' => self::USER_AGENT,
             ],
         ];
         $client = $this->createClient(
@@ -161,7 +163,7 @@ class BasicClientTest extends TestCase
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
-                'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
+                'User-Agent' => self::USER_AGENT,
             ],
         ];
         $client = $this->createClient(
@@ -192,7 +194,7 @@ class BasicClientTest extends TestCase
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
-                'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
+                'User-Agent' => self::USER_AGENT,
             ],
             "json" => [],
         ];
@@ -226,7 +228,7 @@ class BasicClientTest extends TestCase
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
-                'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
+                'User-Agent' => self::USER_AGENT,
             ],
             "json" => $payload,
         ];
@@ -259,7 +261,7 @@ class BasicClientTest extends TestCase
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
-                'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
+                'User-Agent' => self::USER_AGENT,
             ],
             "json" => $payload,
         ];
@@ -290,7 +292,7 @@ class BasicClientTest extends TestCase
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
-                'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
+                'User-Agent' => self::USER_AGENT,
             ],
             "json" => [],
         ];
@@ -322,7 +324,7 @@ class BasicClientTest extends TestCase
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
-                'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
+                'User-Agent' => self::USER_AGENT,
             ],
         ];
         $client = $this->createClient(
@@ -352,7 +354,7 @@ class BasicClientTest extends TestCase
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer access_token',
-                'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
+                'User-Agent' => self::USER_AGENT,
             ],
         ];
         $client = $this->createClient(
@@ -403,7 +405,7 @@ class BasicClientTest extends TestCase
                 $this->assertEquals([
                     'headers' => [
                         'Authorization' => 'Bearer access_token',
-                        'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
+                        'User-Agent' => self::USER_AGENT,
                     ],
                 ], $options);
 
@@ -471,7 +473,7 @@ class BasicClientTest extends TestCase
                     $this->assertEquals([
                         'headers' => [
                             'Authorization' => 'Bearer access_token',
-                            'User-Agent' => 'Mehdibo-FT-BasicClient/'.BasicClient::VERSION,
+                            'User-Agent' => self::USER_AGENT,
                         ],
                     ], $options);
 
