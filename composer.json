@@ -24,7 +24,7 @@
         "authentication"
     ],
     "require": {
-        "php": "^8.0|^8.1",
+        "php": "^8.1",
         "mehdibo/oauth2-fortytwo": "^1.0",
         "symfony/http-client": "^6.1"
     },
