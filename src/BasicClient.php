@@ -172,7 +172,7 @@ class BasicClient
     }
 
     /**
-     * @param string $uri
+     * @param string $uri The URI to request, e.g. /projects_users
      * @param array<string|int, mixed> $payload
      * @return ResponseInterface
      * @throws RateLimitReached
@@ -186,7 +186,7 @@ class BasicClient
     }
 
     /**
-     * @param string $uri
+     * @param string $uri The URI to request, e.g. /projects_users
      * @param array<string|int, mixed> $payload
      * @return ResponseInterface
      * @throws RateLimitReached
@@ -200,7 +200,7 @@ class BasicClient
     }
 
     /**
-     * @param string $uri
+     * @param string $uri The URI to request, e.g. /projects_users
      * @return ResponseInterface
      * @throws RateLimitReached
      * @throws IdentityProviderException
@@ -215,6 +215,7 @@ class BasicClient
 
     /**
      * Enumerate a resource and return all the items by navigating all pages
+     * @param string $uri The URI to request, e.g. /projects_users
      * @param array<string, string> $query
      * @param int $maxItems Maximum of items to return. If 0, all items will be returned
      * @param int $startPage Page to start from
