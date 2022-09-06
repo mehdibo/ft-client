@@ -225,7 +225,7 @@ class BasicClient
      * @throws ServerError
      * @throws EnumerationRateLimited
      */
-    public function enumerate(string $uri, array $query = [], int $maxItems = 0, int $startPage = 1): \Generator
+    public function enumerate(string $uri, array $query = [], int $maxItems = 0, int $startPage = 1): iterable
     {
         $page = ($startPage <= 0) ? 1 : $startPage;
         $perPage = ($maxItems !== 0 && $maxItems < 100) ? $maxItems : 100;
