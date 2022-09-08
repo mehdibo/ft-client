@@ -219,7 +219,7 @@ class BasicClient
      * @param array<string, string> $query
      * @param int $maxItems Maximum of items to return. If 0, all items will be returned
      * @param int $startPage Page to start from
-     * @return \Generator<int, array<string, mixed>>
+     * @return iterable<int, array<string, mixed>>
      * @throws IdentityProviderException
      * @throws TransportExceptionInterface
      * @throws ServerError
